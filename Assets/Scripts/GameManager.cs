@@ -5,19 +5,31 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public GameObject mainSprite;
+    public Sprite spriteStand;
+    public Sprite spriteLeft;
+    public Sprite spriteRight;
+    public Sprite spriteRamp;
+    public Sprite spriteStraight;
+    public Sprite spriteGrind;
+    public float coinsOnLevel = 250f;
     public TMP_Text coinCounter;
     public TMP_Text heightValue;
-    public TMP_Text distanceValue;
-    public TMP_Text timerText;
+    //public TMP_Text distanceValue;
+    //public TMP_Text timerText;
     public TMP_Text speedText;
     public TMP_Text scoreText;
     public TMP_Text rankText;
     public TMP_Text pressSpace;
-    private float elapsedTime;
+    public float elapsedTime;
     private float score;
     public float coins = 0;
+    public float bonusCoins = 0;
+    public float autographValue = 1f;
     public Slider timerSlider;
     public Slider heightSlider;
+    public GameObject timerSliderObject;
+    public GameObject heightSliderObject;
     public GameObject player;
     public GameObject startingPoint;
     public bool timerPhase = false;
@@ -34,6 +46,13 @@ public class GameManager : MonoBehaviour
     public bool isRoundStarted = false;
     public bool firstStart = true;
 
+    public float climbDistance1 = -.1f;
+    public float climbDistance2 = .1f;
+    public int streetNumber = 0;
+
+    public GameObject[] coinPrefab;
+    public GameObject coinPrefab2;
+
     PlayerBehaviour playerBehaviour;
 
     private void Awake()
@@ -43,8 +62,10 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
+        mainSprite.GetComponent<SpriteRenderer>().sprite = spriteStand;
+        RespawnCoins();
         firstStart = true;
-        pressSpace.enabled = false;
+        pressSpace.enabled = true;
         playerBehaviour.cinemachineCamera.Follow = null;
         playerBehaviour.rb.velocity = Vector2.zero;
         playerBehaviour.rb.isKinematic = true;
@@ -53,6 +74,14 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        if (streetNumber == 0)
+        {
+            startingPoint.transform.position = new Vector3(0.46f, 0.67f, 0);
+        }
+        else
+        {
+            startingPoint.transform.position = new Vector3(1.63f, 0.67f, 0);
+        }
         if (Input.GetKeyDown(KeyCode.Space) && !firstStart)
         {
             StartRound();
@@ -69,14 +98,38 @@ public class GameManager : MonoBehaviour
         {
             speedText.enabled = true;
         }
-
+        if (firstStart)
+        {
+            coinCounter.enabled = false;
+            heightValue.enabled = false;
+            heightSlider.enabled = false;
+            //distanceValue.enabled = false;
+            //timerText.enabled = false;
+            speedText.enabled = false;
+            scoreText.enabled = false;
+            rankText.enabled = false;
+            timerSliderObject.SetActive(false);
+            heightSliderObject.SetActive(false);
+        }
+        else
+        {
+            coinCounter.enabled = true;
+            heightValue.enabled = true;
+            //distanceValue.enabled = true;
+            //timerText.enabled = true;
+            speedText.enabled = true;
+            scoreText.enabled = true;
+            rankText.enabled = true;
+            timerSliderObject.SetActive(true);
+            heightSliderObject.SetActive(true);
+        }
 
         if (playerBehaviour.isGrinding && !isRoundOver)
         {
             elapsedTime += Time.deltaTime;
-            timerText.text = "Grind time: " + elapsedTime.ToString("F1") + "s"; 
+            //timerText.text = "Grind time: " + elapsedTime.ToString("F1") + "s";
         }
-        score = elapsedTime * (playerBehaviour.player.transform.position.x + coins + playerBehaviour.maxSpeed + playerBehaviour.maxHeight);
+        score = autographValue * (playerBehaviour.player.transform.position.x + coins + playerBehaviour.maxSpeed + playerBehaviour.maxHeight + elapsedTime);
         coinCounter.text = "Coins: " + coins;
         heightValue.text = "" + player.transform.position.y.ToString("F1") + "m";
         speedText.text = "" + playerBehaviour.currentSpeed.ToString("F1") + "m/s";
@@ -84,7 +137,7 @@ public class GameManager : MonoBehaviour
         heightSlider.value = player.transform.position.y;
         if (player.transform.position.x > 0)
         {
-            distanceValue.text = "Distance: " + player.transform.position.x.ToString("F1") + "m"; 
+            //distanceValue.text = "Distance: " + player.transform.position.x.ToString("F1") + "m";
         }
         if (timerPhase)
         {
@@ -97,6 +150,26 @@ public class GameManager : MonoBehaviour
                 RightPress();
             }
         }
+        if (!isRoundStarted && !timerPhase)
+        {
+            if (pressLeft && !isRoundStarted || pressRight && !isRoundStarted)
+            {
+                pressSpace.text = "press W to jump off the ramp!";
+            }
+            else
+            {
+                pressSpace.text = "press SPACE to start!"; 
+            }
+        }
+        else if (timerPhase)
+        {
+                pressSpace.text = "press A/D or arrows to climb!"; 
+        }
+
+
+
+
+
         if (score > 0 && score < 100)
         {
             rankText.text = "Rank: F";
@@ -142,7 +215,7 @@ public class GameManager : MonoBehaviour
         {
             timerPhase = true;
             playerBehaviour.rb.isKinematic = true;
-            timerSlider.value -= .02f * timerMultiplier;
+            timerSlider.value -= .05f * timerMultiplier;
             yield return new WaitForSeconds(.15f);
         }
         //Debug.Log("Time's up!");
@@ -153,28 +226,65 @@ public class GameManager : MonoBehaviour
 
     private void LeftPress()
     {
-        pressLeft = true;
-        pressRight = false;
-        player.transform.position += new Vector3(-.1f, .1f);
+        if (streetNumber == 0)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
+            pressLeft = true;
+            pressRight = false;
+            player.transform.position += new Vector3((-0.2f * climbDistance1), 0.2f * climbDistance2); 
+        }
+        else if(streetNumber == 1)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
+            pressLeft = true;
+            pressRight = false;
+            player.transform.position += new Vector3((-0.2f * climbDistance1) -0.05f, 0.2f * climbDistance2);
+        }
+        else if (streetNumber == 2)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
+            pressLeft = true;
+            pressRight = false;
+            player.transform.position += new Vector3(-0.2f * climbDistance1, 0.2f * climbDistance2);
+        }
+        else if (streetNumber == 3)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
+            pressLeft = true;
+            pressRight = false;
+            player.transform.position += new Vector3((-0.2f * climbDistance1) +0.1f, (0.2f * climbDistance2) + 0.3f);
+        }
     }
     private void RightPress()
     {
+        mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
         pressRight = true;
         pressLeft = false;
-        player.transform.position += new Vector3(-.1f, .1f);
+        player.transform.position += new Vector3(climbDistance1, climbDistance2);
     }
 
     public void EndRound()
     {
+        playerBehaviour.setStraight = false;
+        bonusCoins = Mathf.Floor(score / 10);
+        coins += bonusCoins;
         isRoundOver = true;
         playerBehaviour.leftTheRamp = false;
         //StartCoroutine(playerBehaviour.CameraChangeBack());
         firstScreenAnimator.SetTrigger("FirstScreenTr1");
         Debug.Log("Round Over");
+        pressLeft = false;
+        pressRight = false;
     }
 
     public void ResetRound()
     {
+        mainSprite.GetComponent<SpriteRenderer>().sprite = spriteStand;
+        RespawnCoins();
+        playerBehaviour.isSlowRunning = false;
+        //distanceValue.text = "Distance: 0m";
+        elapsedTime = 0f;
+        //timerText.text = "Grind time: " + elapsedTime.ToString("F1") + "s";
         playerBehaviour.cinemachineCamera.Follow = playerBehaviour.player.transform;
         pressSpace.enabled = true;
         firstScreenAnimator.Update(0);
@@ -190,8 +300,11 @@ public class GameManager : MonoBehaviour
     }
     public void StartRound()
     {
+        if (playerBehaviour.purchasedTool)
+        {
+            playerBehaviour.jumpedToolUpgrade = true;
+        }
         playerBehaviour.cinemachineCamera.Follow = playerBehaviour.player.transform;
-        pressSpace.enabled = false;
         elapsedTime = 0f;
         playerBehaviour.loseMomentumIsPlaying = false;
         playerBehaviour.gainMomentumIsPlaying = false;
@@ -207,5 +320,18 @@ public class GameManager : MonoBehaviour
         cameraAnimator.Play("CameraIntro");
         yield return null;
 
+    }
+
+    private void RespawnCoins()
+    {
+        coinPrefab = GameObject.FindGameObjectsWithTag("Coin");
+        foreach (GameObject coin in coinPrefab)
+        {
+            Destroy(coin); 
+        }
+        for (int i = 0; i < coinsOnLevel; i++)
+        {
+            GameObject coinObject = Instantiate(coinPrefab2, new Vector3(Random.Range(10f, 1000f), Random.Range(0.5f, 25f), 0), Quaternion.identity); 
+        }
     }
 }

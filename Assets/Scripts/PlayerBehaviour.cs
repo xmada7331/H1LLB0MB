@@ -1,6 +1,6 @@
+using Cinemachine;
 using System.Collections;
 using UnityEngine;
-using Cinemachine;
 
 public class PlayerBehaviour : MonoBehaviour
 {
@@ -17,10 +17,22 @@ public class PlayerBehaviour : MonoBehaviour
     public LayerMask grindLayer;
     public PhysicsMaterial2D physicsMaterial;
 
-    public float gainMultiplier = 1.1f;
-    public float loseMultiplier = 1.1f;
+    public float gainMultiplier = 3f;
+    public float loseMultiplier = 2f;
 
+    public float maxJumpUsed = 1f;
     public float jumpStacks = 1f;
+    public float launchForceX = 2f;
+    public float launchForceY = 4f;
+    public float jumpForceX = 2f;
+    public float jumpForceY = 4f;
+
+    public float reviveLaunchForceX = 3f;
+    public float reviveLaunchForceY = 5f;
+
+    public float coinValue = 1f;
+    public float slowAmount = 0f;
+    public float slowDuration = 0f;
 
     public bool loseMomentumIsPlaying;
     public bool loseAirMomentumIsPlaying;
@@ -32,6 +44,11 @@ public class PlayerBehaviour : MonoBehaviour
     public float currentSpeed;
 
     public bool playingCamera = false;
+    public bool isSlowRunning = false;
+    public bool purchasedTool = false;
+    public bool jumpedToolUpgrade = false;
+
+    public bool setStraight = false;
 
     private void Awake()
     {
@@ -40,31 +57,55 @@ public class PlayerBehaviour : MonoBehaviour
     }
     void Start()
     {
+        setStraight = false;
         leftTheRamp = false;
+        isSlowRunning = false;
+        purchasedTool = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (isGrinding && jumpStacks > 0 && Input.GetKeyDown(KeyCode.W))
+        if (isGrinding && jumpStacks > 0 && Input.GetKeyDown(KeyCode.W) && jumpStacks <= maxJumpUsed)
         {
-            rb.AddForce(new Vector2(2, 10   ), ForceMode2D.Impulse);
-            jumpStacks--;
+            rb.AddForce(new Vector2(jumpForceX, jumpForceY), ForceMode2D.Impulse);
+            jumpStacks++;
         }
         if (!usedJumpBoost && Input.GetKeyDown(KeyCode.W))
         {
-            rb.AddForce(new Vector2(5, 10), ForceMode2D.Impulse);
+            rb.AddForce(new Vector2(launchForceX, launchForceY), ForceMode2D.Impulse);
             usedJumpBoost = true;
         }
 
-        if (player.transform.localPosition.x > 1 && rb.velocity.x <= 0 && !gameManager.isRoundOver)
+        if (player.transform.localPosition.x > 3 && rb.velocity.x <= 0 && !gameManager.isRoundOver)
         {
-            gameManager.EndRound();
+            if (purchasedTool && jumpedToolUpgrade)
+            {
+                ReviveLaunch();
+            }
+            else if (player.transform.localPosition.x > 1 && rb.velocity.x <= 0)
+            {
+                gameManager.EndRound(); 
+            }
 
         }
+
         if (rb.velocity.x < 0)
         {
             rb.velocity = new Vector2(0, rb.velocity.y);
+            gameManager.mainSprite.GetComponent<SpriteRenderer>().sprite = gameManager.spriteStand;
+        }
+        else if (rb.velocity.x > 0.1)
+        {
+            if (player.transform.localPosition.y <= 0.2)
+            {
+                gameManager.mainSprite.GetComponent<SpriteRenderer>().sprite = gameManager.spriteStraight;
+                setStraight = true;
+            }
+            else if (player.transform.localPosition.y >= 0.2 && !setStraight)
+            {
+                gameManager.mainSprite.GetComponent<SpriteRenderer>().sprite = gameManager.spriteRamp; 
+            }
         }
         if (rb.velocity.y < 0 && !isOnRamp && leftTheRamp && !countedHeight)
         {
@@ -101,6 +142,7 @@ public class PlayerBehaviour : MonoBehaviour
         else if (isGrinding && !loseMomentumIsPlaying)
         {
             StartCoroutine(LoseMomentum());
+            gameManager.mainSprite.GetComponent<SpriteRenderer>().sprite = gameManager.spriteGrind;
         }
     }
 
@@ -157,10 +199,14 @@ public class PlayerBehaviour : MonoBehaviour
             usedJumpBoost = false;
             leftTheRamp = true;
         }
+        if (collision.CompareTag("SlowZone") && !isSlowRunning)
+        {
+            StartCoroutine(SlowTime());
+        }
         if (collision.CompareTag("Coin"))
         {
             Destroy(collision.gameObject);
-            gameManager.coins++;
+            gameManager.coins = gameManager.coins + coinValue;
         }
     }
     private void OnTriggerExit2D(Collider2D collision)
@@ -170,11 +216,25 @@ public class PlayerBehaviour : MonoBehaviour
             usedJumpBoost = true;
         }
     }
+    private IEnumerator SlowTime()
+    {
+        isSlowRunning = true;
+        Time.timeScale = 1 - slowAmount;
+        yield return new WaitForSeconds(slowDuration);
+        Time.timeScale = 1;
+
+    }
 
     private void CountHeight()
     {
         countedHeight = true;
         maxHeight = player.transform.position.y;
+    }
+
+    private void ReviveLaunch()
+    {
+        rb.AddForce(new Vector2(reviveLaunchForceX, reviveLaunchForceY), ForceMode2D.Impulse);
+        jumpedToolUpgrade = false;
     }
 
 }

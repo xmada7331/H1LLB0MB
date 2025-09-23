@@ -27,11 +27,11 @@ public class EndRoundCanvas : MonoBehaviour
     
     void Update()
     {
-        distance.text = gameManager.distanceValue.text;
-        coins.text = "Coins: " + gameManager.coins;
+        distance.text = "Distance: " + gameManager.player.transform.position.x.ToString("F1") + "m";
+        coins.text = "Bonus Coins: " + gameManager.bonusCoins;
         maxSpeed.text = "Max Speed: " + playerBehaviour.maxSpeed.ToString("F1") + "m/s";
         maxHeight.text = "Max Height: " + playerBehaviour.maxHeight.ToString("F1") + "m";
-        grindTime.text =gameManager.timerText.text;
+        grindTime.text = "Grind time: " + gameManager.elapsedTime.ToString("F1") + "s";
 
     }
 }
