@@ -24,18 +24,18 @@ public class WheelsUpgrade : MonoBehaviour
 
         if (upgrade.upgradeLevel == 1)
         {
-            playerBehaviour.gainMultiplier = 3.3f;
+            playerBehaviour.gainMultiplier = 1.2f;
 
 
         }
         if (upgrade.upgradeLevel == 2)
         {
-            playerBehaviour.gainMultiplier = 3.8f;
+            playerBehaviour.gainMultiplier = 1.5f;
 
         }
         if (upgrade.upgradeLevel == 3)
         {
-            playerBehaviour.gainMultiplier = 16f;
+            playerBehaviour.gainMultiplier = 1.8f;
 
         }
 

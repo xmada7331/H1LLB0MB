@@ -22,19 +22,19 @@ public class BootsUpgrade : MonoBehaviour
     {
         if (upgrade.upgradeLevel == 1)
         {
-            gameManager.climbDistance1 = -0.2f;
-            gameManager.climbDistance2 = 0.2f;
+            gameManager.climbDistance1 = -.3f;
+            gameManager.climbDistance2 = .3f;
 
         }
         if (upgrade.upgradeLevel == 2)
         {
-            gameManager.climbDistance1 = -.4f;
-            gameManager.climbDistance2 = .4f;
+            gameManager.climbDistance1 = -.5f;
+            gameManager.climbDistance2 = .5f;
         }
         if (upgrade.upgradeLevel == 3)
         {
-            gameManager.climbDistance1 = -.7f;
-            gameManager.climbDistance2 = .7f;
+            gameManager.climbDistance1 = -1f;
+            gameManager.climbDistance2 = 1f;
 
         }
 

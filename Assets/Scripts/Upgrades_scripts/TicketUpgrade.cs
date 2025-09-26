@@ -28,6 +28,7 @@ public class TicketUpgrade : MonoBehaviour
         if (upgrade.upgradeLevel == 0)
         {
             gameManager.streetNumber = 0;
+            playerBehaviour.streetMult = .7f;
             street0.SetActive(true);
             street1.SetActive(false);
             street2.SetActive(false);
@@ -36,6 +37,7 @@ public class TicketUpgrade : MonoBehaviour
         }
         if (upgrade.upgradeLevel == 1)
         {
+            playerBehaviour.streetMult = .9f;
             gameManager.streetNumber = 1;
             street0.SetActive(false);
             street1.SetActive(true);
@@ -44,6 +46,7 @@ public class TicketUpgrade : MonoBehaviour
         }
         if (upgrade.upgradeLevel == 2)
         {
+            playerBehaviour.streetMult = 1f;
             gameManager.streetNumber = 2;
             street1.SetActive(false);
             street2.SetActive(true);
@@ -51,6 +54,7 @@ public class TicketUpgrade : MonoBehaviour
         }
         if (upgrade.upgradeLevel == 3)
         {
+            playerBehaviour.streetMult = 1.3f;
             gameManager.streetNumber = 3;
             street2.SetActive(false);
             street3.SetActive(true);

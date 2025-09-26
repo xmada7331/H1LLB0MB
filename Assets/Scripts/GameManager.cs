@@ -28,6 +28,8 @@ public class GameManager : MonoBehaviour
     public float autographValue = 1f;
     public Slider timerSlider;
     public Slider heightSlider;
+    public GameObject coinsGO;
+    public GameObject heightGO;
     public GameObject timerSliderObject;
     public GameObject heightSliderObject;
     public GameObject player;
@@ -39,6 +41,7 @@ public class GameManager : MonoBehaviour
     public GameObject endRoundCanvas;
     public Animator firstScreenAnimator;
     public Animator secondScreenAnimator;
+    public Animator timerAnimator;
 
     public float timerMultiplier;
 
@@ -46,8 +49,8 @@ public class GameManager : MonoBehaviour
     public bool isRoundStarted = false;
     public bool firstStart = true;
 
-    public float climbDistance1 = -.1f;
-    public float climbDistance2 = .1f;
+    public float climbDistance1 = 1f;  //default -.1f
+    public float climbDistance2 = 1f;   //defauilt .1f;
     public int streetNumber = 0;
 
     public GameObject[] coinPrefab;
@@ -69,6 +72,8 @@ public class GameManager : MonoBehaviour
         playerBehaviour.cinemachineCamera.Follow = null;
         playerBehaviour.rb.velocity = Vector2.zero;
         playerBehaviour.rb.isKinematic = true;
+        coinsGO.SetActive(false);
+        heightGO.SetActive(false);
     }
 
 
@@ -76,11 +81,15 @@ public class GameManager : MonoBehaviour
     {
         if (streetNumber == 0)
         {
-            startingPoint.transform.position = new Vector3(0.46f, 0.67f, 0);
+            startingPoint.transform.position = new Vector3(0.37f, 1.04f, 0);
+        }
+        else if (streetNumber == 1 || streetNumber == 2)
+        {
+            startingPoint.transform.position = new Vector3(0.89f, 1.42f, 0);
         }
         else
         {
-            startingPoint.transform.position = new Vector3(1.63f, 0.67f, 0);
+            startingPoint.transform.position = new Vector3(0.8f, 1.56f, 0);
         }
         if (Input.GetKeyDown(KeyCode.Space) && !firstStart)
         {
@@ -100,20 +109,24 @@ public class GameManager : MonoBehaviour
         }
         if (firstStart)
         {
-            coinCounter.enabled = false;
+            coinsGO.SetActive(false);
+            heightGO.SetActive(false);
+            //coinCounter.enabled = false;
             heightValue.enabled = false;
-            heightSlider.enabled = false;
+            //heightSlider.enabled = false;
             //distanceValue.enabled = false;
             //timerText.enabled = false;
             speedText.enabled = false;
             scoreText.enabled = false;
             rankText.enabled = false;
             timerSliderObject.SetActive(false);
-            heightSliderObject.SetActive(false);
+            //heightSliderObject.SetActive(false);
         }
         else
         {
-            coinCounter.enabled = true;
+            coinsGO.SetActive(true);
+            heightGO.SetActive(true);
+            //coinCounter.enabled = true;
             heightValue.enabled = true;
             //distanceValue.enabled = true;
             //timerText.enabled = true;
@@ -121,7 +134,7 @@ public class GameManager : MonoBehaviour
             scoreText.enabled = true;
             rankText.enabled = true;
             timerSliderObject.SetActive(true);
-            heightSliderObject.SetActive(true);
+            //heightSliderObject.SetActive(true);
         }
 
         if (playerBehaviour.isGrinding && !isRoundOver)
@@ -165,6 +178,14 @@ public class GameManager : MonoBehaviour
         {
                 pressSpace.text = "press A/D or arrows to climb!"; 
         }
+        if (timerSlider.value <= 0.1f || timerSlider.value >= 0.9f)
+        {
+            timerAnimator.enabled = false;
+        }
+        else
+        {
+            timerAnimator.enabled = true;
+        }
 
 
 
@@ -172,39 +193,57 @@ public class GameManager : MonoBehaviour
 
         if (score > 0 && score < 100)
         {
-            rankText.text = "Rank: F";
+            rankText.color = Color.grey;
+            rankText.fontSize = 24;
+            rankText.text = "F";
         }
         if (score > 101 && score < 500)
         {
-            rankText.text = "Rank: E";
+            rankText.color = Color.yellow;
+            rankText.fontSize = 26;
+            rankText.text = "E";
         }
         if (score > 501 && score < 1500)
         {
-            rankText.text = "Rank: D";
+            rankText.color = Color.blue;
+            rankText.fontSize = 28;
+            rankText.text = "D";
         }
         if (score > 1501 && score < 3000)
         {
-            rankText.text = "Rank: C";
+            rankText.color = new Color32(55,105,125, 255);
+            rankText.fontSize = 30;
+            rankText.text = "C";
         }
         if (score > 3001 && score < 7500)
         {
-            rankText.text = "Rank: B";
+            rankText.color = new Color32(255, 145, 255, 255);
+            rankText.fontSize = 48;
+            rankText.text = "B";
         }
-        if (score > 7501 && score < 15000)
+        if (score > 7501 && score < 10000)
         {
-            rankText.text = "Rank: A";
+            rankText.color = new Color32(255, 5, 55, 255);
+            rankText.fontSize = 58;
+            rankText.text = "A";
         }
-        if (score > 15001 && score < 30000)
+        if (score > 10001 && score < 15000)
         {
-            rankText.text = "Rank: S";
+            rankText.color = new Color32(250, 247, 92, 255);
+            rankText.fontSize = 78;
+            rankText.text = "S";
         }
-        if (score > 30001 && score < 50000)
+        if (score > 15001 && score < 20000)
         {
-            rankText.text = "Rank: SS";
+            rankText.color = new Color32(93, 255, 189, 255);
+            rankText.fontSize = 50;
+            rankText.text = "SS";
         }
-        if (score > 50001)
+        if (score > 20001)
         {
-            rankText.text = "Rank: SSS!";
+            rankText.color = new Color32(255, 0, 249, 255);
+            rankText.fontSize = 52;
+            rankText.text = "SSS!";
         }
 
     }
@@ -231,36 +270,66 @@ public class GameManager : MonoBehaviour
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
             pressLeft = true;
             pressRight = false;
-            player.transform.position += new Vector3((-0.2f * climbDistance1), 0.2f * climbDistance2); 
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.565f)), climbDistance2 * (0.562f));
         }
         else if(streetNumber == 1)
         {
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
             pressLeft = true;
             pressRight = false;
-            player.transform.position += new Vector3((-0.2f * climbDistance1) -0.05f, 0.2f * climbDistance2);
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.6f)), climbDistance2 * (0.75f));
+
         }
         else if (streetNumber == 2)
         {
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
             pressLeft = true;
             pressRight = false;
-            player.transform.position += new Vector3(-0.2f * climbDistance1, 0.2f * climbDistance2);
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.49f)), climbDistance2 * (0.75f));
+
         }
         else if (streetNumber == 3)
         {
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
             pressLeft = true;
             pressRight = false;
-            player.transform.position += new Vector3((-0.2f * climbDistance1) +0.1f, (0.2f * climbDistance2) + 0.3f);
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.42f)), climbDistance2 * (0.95f));
+
         }
     }
     private void RightPress()
     {
-        mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
-        pressRight = true;
-        pressLeft = false;
-        player.transform.position += new Vector3(climbDistance1, climbDistance2);
+        if (streetNumber == 0)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
+            pressLeft = false;
+            pressRight = true;
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.565f)), climbDistance2 * (0.562f));
+        }
+        else if (streetNumber == 1)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
+            pressLeft = false;
+            pressRight = true;
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.6f)), climbDistance2 * (0.75f));
+
+        }
+        else if (streetNumber == 2)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
+            pressLeft = false;
+            pressRight = true;
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.49f)), climbDistance2 * (0.75f));
+
+        }
+        else if (streetNumber == 3)
+        {
+            mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
+            pressLeft = false;
+            pressRight = true;
+            player.transform.position += new Vector3(-(climbDistance1 * (-0.42f)), climbDistance2 * (0.95f));
+
+        }
     }
 
     public void EndRound()

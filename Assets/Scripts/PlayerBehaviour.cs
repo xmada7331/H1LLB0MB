@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerBehaviour : MonoBehaviour
 {
+    AudioManager audioManager;
     GameManager gameManager;
     public CinemachineVirtualCamera cinemachineCamera;
 
@@ -18,6 +19,7 @@ public class PlayerBehaviour : MonoBehaviour
     public PhysicsMaterial2D physicsMaterial;
 
     public float gainMultiplier = 3f;
+    public float streetMult = .5f;
     public float loseMultiplier = 2f;
 
     public float maxJumpUsed = 1f;
@@ -53,6 +55,7 @@ public class PlayerBehaviour : MonoBehaviour
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
+        audioManager = FindObjectOfType<AudioManager>();
         player = GameObject.FindGameObjectWithTag("Player");
     }
     void Start()
@@ -70,11 +73,14 @@ public class PlayerBehaviour : MonoBehaviour
         {
             rb.AddForce(new Vector2(jumpForceX, jumpForceY), ForceMode2D.Impulse);
             jumpStacks++;
+            audioManager.PlayOllieJump();
         }
         if (!usedJumpBoost && Input.GetKeyDown(KeyCode.W))
         {
             rb.AddForce(new Vector2(launchForceX, launchForceY), ForceMode2D.Impulse);
             usedJumpBoost = true;
+            audioManager.PlayOllieJump();
+
         }
 
         if (player.transform.localPosition.x > 3 && rb.velocity.x <= 0 && !gameManager.isRoundOver)
@@ -128,7 +134,7 @@ public class PlayerBehaviour : MonoBehaviour
 
     private void FixedUpdate()
     {
-        isOnRamp = Physics2D.CircleCast(transform.position, 0.5f, Vector2.down, 0.05f, rampLayer);
+        //isOnRamp = Physics2D.CircleCast(transform.position, 0.5f, Vector2.down, 0.05f, rampLayer);
         isGrinding = Physics2D.CircleCast(transform.position, 0.5f, Vector2.down, 0.05f, grindLayer);
 
         if (isOnRamp && !gainMomentumIsPlaying)
@@ -142,7 +148,20 @@ public class PlayerBehaviour : MonoBehaviour
         else if (isGrinding && !loseMomentumIsPlaying)
         {
             StartCoroutine(LoseMomentum());
+            audioManager.PlayRailGrind();
             gameManager.mainSprite.GetComponent<SpriteRenderer>().sprite = gameManager.spriteGrind;
+        }
+        else if (!isGrinding || rb.velocity.x <= 0)
+        {
+            audioManager.StopRailGrindLoop();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.transform.tag=="Ramp")
+        {
+            isOnRamp = true; 
         }
     }
 
@@ -166,14 +185,14 @@ public class PlayerBehaviour : MonoBehaviour
     //}
     private IEnumerator GainMomentum()
     {
-        rb.velocity += new Vector2(.1f, -.1f) * gainMultiplier;
+        Vector2 direction = rb.velocity.normalized;
+        rb.velocity += direction * gainMultiplier * streetMult;
         yield return new WaitForSeconds(0.5f);
-        //Debug.Log("gained momentum");
         gainMomentumIsPlaying = true;
     }
     private IEnumerator LoseMomentum()
     {
-        while (rb.velocity.x > 0 && isGrinding)
+        while (rb.velocity.x > 0 && isGrinding && leftTheRamp)
         {
             rb.velocity += new Vector2(-.05f, 0f) * loseMultiplier;
             yield return new WaitForSeconds(.2f);
@@ -205,6 +224,7 @@ public class PlayerBehaviour : MonoBehaviour
         }
         if (collision.CompareTag("Coin"))
         {
+            audioManager.PlayCoinCollect();
             Destroy(collision.gameObject);
             gameManager.coins = gameManager.coins + coinValue;
         }
@@ -214,14 +234,17 @@ public class PlayerBehaviour : MonoBehaviour
         if (collision.CompareTag("JumpZone"))
         {
             usedJumpBoost = true;
+            isOnRamp = false;
         }
     }
     private IEnumerator SlowTime()
     {
         isSlowRunning = true;
         Time.timeScale = 1 - slowAmount;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
         yield return new WaitForSeconds(slowDuration);
         Time.timeScale = 1;
+        Time.fixedDeltaTime = 0.02f;
 
     }
 
