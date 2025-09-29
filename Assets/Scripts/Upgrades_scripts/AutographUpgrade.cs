@@ -26,12 +26,12 @@ public class AutographUpgrade : MonoBehaviour
         }
         if (upgrade.upgradeLevel == 2)
         {
-            gameManager.autographValue = 3f;
+            gameManager.autographValue = 4f;
 
         }
         if (upgrade.upgradeLevel == 3)
         {
-            gameManager.autographValue = 5f;
+            gameManager.autographValue = 7f;
 
 
         }

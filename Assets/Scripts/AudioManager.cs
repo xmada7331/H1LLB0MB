@@ -6,10 +6,13 @@ using UnityEngine;
 public class AudioManager : MonoBehaviour
 {
     GameManager gameManager;
+    PlayerBehaviour playerBehaviour;
     public bool isTrackPlaying;
     public bool wasPaused;
     public AudioSource mainAudioSource;
+    public AudioSource tracksAudioSource;
     public AudioSource railGrindSource;
+    public AudioSource windAmbienceSource;
 
     public AudioClip track01;
     public AudioClip track02;
@@ -21,6 +24,9 @@ public class AudioManager : MonoBehaviour
     public AudioClip railHit;
     public AudioClip ollieJump;
     public AudioClip goingDownhill;
+    public AudioClip takeStep;
+    public AudioClip click;
+    public AudioClip purchase;
 
     public TMP_Text trackName;
     public GameObject cassette;
@@ -30,6 +36,7 @@ public class AudioManager : MonoBehaviour
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
+        playerBehaviour = FindObjectOfType<PlayerBehaviour>();
     }
     void Start()
     {
@@ -38,7 +45,9 @@ public class AudioManager : MonoBehaviour
 
     void Update()
     {
-        if (!isTrackPlaying && !mainAudioSource.isPlaying && !wasPaused && !gameManager.firstStart)
+        windAmbienceSource.volume = playerBehaviour.rb.velocity.magnitude / 10;
+        railGrindSource.volume = playerBehaviour.rb.velocity.magnitude / 7;
+        if (!isTrackPlaying && !tracksAudioSource.isPlaying && !wasPaused && !gameManager.firstStart)
         {
             PlayRandomTrack();
         }
@@ -74,38 +83,38 @@ public class AudioManager : MonoBehaviour
         switch (randomTrack)
         {
             case 1:
-                mainAudioSource.clip = track01;
+                tracksAudioSource.clip = track01;
                 trackName.text = "Track 01";
                 isTrackPlaying = true;
                 cassetteAnimator.SetTrigger("Play");
                 break;
             case 2:
-                mainAudioSource.clip = track02;
+                tracksAudioSource.clip = track02;
                 trackName.text = "Track 02";
                 isTrackPlaying = true;
                 cassetteAnimator.SetTrigger("Play");
                 break;
             case 3:
-                mainAudioSource.clip = track03;
+                tracksAudioSource.clip = track03;
                 trackName.text = "Track 03";
                 isTrackPlaying = true;
                 cassetteAnimator.SetTrigger("Play");
                 break;
             case 4:
-                mainAudioSource.clip = track04;
+                tracksAudioSource.clip = track04;
                 trackName.text = "Track 04";
                 isTrackPlaying = true;
                 cassetteAnimator.SetTrigger("Play");
                 break;
             default:
-                mainAudioSource.clip = track01;
+                tracksAudioSource.clip = track01;
                 trackName.text = "Track 01";
                 isTrackPlaying = true;
                 cassetteAnimator.SetTrigger("Play");
                 break;
         }
         isTrackPlaying = false;
-        mainAudioSource.Play();
+        tracksAudioSource.Play();
     }
 
     public void PlayCoinCollect()
@@ -119,6 +128,22 @@ public class AudioManager : MonoBehaviour
             railGrindSource.clip = railGrind;
             railGrindSource.loop = true;
             railGrindSource.Play();
+        }
+    }
+    public void PlayGoingDownhill()
+    {
+        if (!railGrindSource.isPlaying)
+        {
+            railGrindSource.clip = goingDownhill;
+            railGrindSource.loop = true;
+            railGrindSource.Play();
+        }
+    }
+    public void StopGoingDownhill()
+    {
+        if (railGrindSource.isPlaying)
+        {
+            railGrindSource.Stop();
         }
     }
     public void StopRailGrindLoop()
@@ -136,9 +161,23 @@ public class AudioManager : MonoBehaviour
     {
         mainAudioSource.PlayOneShot(ollieJump);
     }
-    public void PlayGoingDownhill()
+    public void PlayTakeStep()
     {
-        mainAudioSource.PlayOneShot(goingDownhill);
+        mainAudioSource.PlayOneShot(takeStep);
     }
+    public void PlayClick()
+    {
+        mainAudioSource.PlayOneShot(click);
+    }
+    public void PlayPurchase()
+    {
+        mainAudioSource.PlayOneShot(purchase);
+    }
+    public void PlayCassette()
+    {
+        mainAudioSource.PlayOneShot(cassetteChange);
+    }
+
+
 
 }

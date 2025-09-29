@@ -8,6 +8,7 @@ TagManager:
   - JumpZone
   - Coin
   - SlowZone
+  - EndGame
   layers:
   - Default
   - TransparentFX

@@ -40,6 +40,7 @@ public class PlayerBehaviour : MonoBehaviour
     public bool loseAirMomentumIsPlaying;
     public bool gainMomentumIsPlaying;
     public bool usedJumpBoost = true;
+    public bool grindHitSoundPlayed = false;
 
     public float maxHeight;
     public float maxSpeed;
@@ -69,13 +70,13 @@ public class PlayerBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isGrinding && jumpStacks > 0 && Input.GetKeyDown(KeyCode.W) && jumpStacks <= maxJumpUsed)
+        if (isGrinding && jumpStacks > 0 && Input.GetKeyDown(KeyCode.W) && jumpStacks <= maxJumpUsed || isGrinding && jumpStacks > 0 && Input.GetKeyDown(KeyCode.UpArrow) && jumpStacks <= maxJumpUsed)
         {
             rb.AddForce(new Vector2(jumpForceX, jumpForceY), ForceMode2D.Impulse);
             jumpStacks++;
             audioManager.PlayOllieJump();
         }
-        if (!usedJumpBoost && Input.GetKeyDown(KeyCode.W))
+        if (!usedJumpBoost && Input.GetKeyDown(KeyCode.W) || !usedJumpBoost && Input.GetKeyDown(KeyCode.UpArrow))
         {
             rb.AddForce(new Vector2(launchForceX, launchForceY), ForceMode2D.Impulse);
             usedJumpBoost = true;
@@ -89,7 +90,7 @@ public class PlayerBehaviour : MonoBehaviour
             {
                 ReviveLaunch();
             }
-            else if (player.transform.localPosition.x > 1 && rb.velocity.x <= 0)
+            else if (player.transform.localPosition.x > 1 && rb.velocity.x <= 0 && !gameManager.gameEnded)
             {
                 gameManager.EndRound(); 
             }
@@ -126,6 +127,12 @@ public class PlayerBehaviour : MonoBehaviour
         if (!isGrinding)
         {
             loseMomentumIsPlaying = false;
+            grindHitSoundPlayed = false;
+        }
+        if (isGrinding && !grindHitSoundPlayed)
+        {
+            audioManager.PlayRailHit();
+            grindHitSoundPlayed = true;
         }
 
         //Debug.Log("max height:" + maxHeight);
@@ -140,10 +147,12 @@ public class PlayerBehaviour : MonoBehaviour
         if (isOnRamp && !gainMomentumIsPlaying)
         {
             StartCoroutine(GainMomentum());
+            audioManager.PlayGoingDownhill();
         }
         else if (leftTheRamp && !loseAirMomentumIsPlaying)
         {
             StartCoroutine(LoseAirMomentum());
+            audioManager.StopGoingDownhill();
         }
         else if (isGrinding && !loseMomentumIsPlaying)
         {
@@ -227,6 +236,10 @@ public class PlayerBehaviour : MonoBehaviour
             audioManager.PlayCoinCollect();
             Destroy(collision.gameObject);
             gameManager.coins = gameManager.coins + coinValue;
+        }
+        if (collision.CompareTag("EndGame"))
+        {
+            gameManager.EndGame();
         }
     }
     private void OnTriggerExit2D(Collider2D collision)

@@ -5,7 +5,11 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    AudioManager audioManager;
     public GameObject mainSprite;
+    public GameObject titleGO;
+    public GameObject endGameCreditsGO;
+    public Transform endGameGO;
     public Sprite spriteStand;
     public Sprite spriteLeft;
     public Sprite spriteRight;
@@ -15,6 +19,7 @@ public class GameManager : MonoBehaviour
     public float coinsOnLevel = 250f;
     public TMP_Text coinCounter;
     public TMP_Text heightValue;
+    public TMP_Text endGameCredits;
     //public TMP_Text distanceValue;
     //public TMP_Text timerText;
     public TMP_Text speedText;
@@ -37,11 +42,13 @@ public class GameManager : MonoBehaviour
     public bool timerPhase = false;
     public bool pressLeft = false;
     public bool pressRight = false;
+    public bool gameEnded = false;
 
     public GameObject endRoundCanvas;
     public Animator firstScreenAnimator;
     public Animator secondScreenAnimator;
     public Animator timerAnimator;
+    public Animator endGameAnimator;
 
     public float timerMultiplier;
 
@@ -61,12 +68,15 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         playerBehaviour = FindObjectOfType<PlayerBehaviour>();
+        audioManager = FindObjectOfType<AudioManager>();
 
     }
     void Start()
     {
         mainSprite.GetComponent<SpriteRenderer>().sprite = spriteStand;
         RespawnCoins();
+        titleGO.SetActive(true);
+        endGameCreditsGO.SetActive(false);
         firstStart = true;
         pressSpace.enabled = true;
         playerBehaviour.cinemachineCamera.Follow = null;
@@ -94,6 +104,7 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && !firstStart)
         {
             StartRound();
+            titleGO.SetActive(false);
         }
         if (Input.GetKeyDown(KeyCode.Space) && firstStart)
         {
@@ -122,7 +133,7 @@ public class GameManager : MonoBehaviour
             timerSliderObject.SetActive(false);
             //heightSliderObject.SetActive(false);
         }
-        else
+        else if (!firstStart && !gameEnded)
         {
             coinsGO.SetActive(true);
             heightGO.SetActive(true);
@@ -142,7 +153,7 @@ public class GameManager : MonoBehaviour
             elapsedTime += Time.deltaTime;
             //timerText.text = "Grind time: " + elapsedTime.ToString("F1") + "s";
         }
-        score = autographValue * (playerBehaviour.player.transform.position.x + coins + playerBehaviour.maxSpeed + playerBehaviour.maxHeight + elapsedTime);
+        score = autographValue * ((playerBehaviour.player.transform.position.x * 2) + bonusCoins + playerBehaviour.maxSpeed + playerBehaviour.maxHeight + elapsedTime);
         coinCounter.text = "Coins: " + coins;
         heightValue.text = "" + player.transform.position.y.ToString("F1") + "m";
         speedText.text = "" + playerBehaviour.currentSpeed.ToString("F1") + "m/s";
@@ -171,12 +182,12 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                pressSpace.text = "press SPACE to start!"; 
+                pressSpace.text = "press SPACE to start!";
             }
         }
         else if (timerPhase)
         {
-                pressSpace.text = "press A/D or arrows to climb!"; 
+            pressSpace.text = "press A/D or arrows to climb!";
         }
         if (timerSlider.value <= 0.1f || timerSlider.value >= 0.9f)
         {
@@ -186,6 +197,16 @@ public class GameManager : MonoBehaviour
         {
             timerAnimator.enabled = true;
         }
+
+        if (isRoundOver)
+        {
+            audioManager.tracksAudioSource.volume = 0.18f;
+        }
+        else if (!isRoundOver && !gameEnded)
+        {
+            audioManager.tracksAudioSource.volume = 0.45f;
+        }
+
 
 
 
@@ -211,7 +232,7 @@ public class GameManager : MonoBehaviour
         }
         if (score > 1501 && score < 3000)
         {
-            rankText.color = new Color32(55,105,125, 255);
+            rankText.color = new Color32(55, 105, 125, 255);
             rankText.fontSize = 30;
             rankText.text = "C";
         }
@@ -265,6 +286,7 @@ public class GameManager : MonoBehaviour
 
     private void LeftPress()
     {
+        audioManager.PlayTakeStep();
         if (streetNumber == 0)
         {
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
@@ -272,7 +294,7 @@ public class GameManager : MonoBehaviour
             pressRight = false;
             player.transform.position += new Vector3(-(climbDistance1 * (-0.565f)), climbDistance2 * (0.562f));
         }
-        else if(streetNumber == 1)
+        else if (streetNumber == 1)
         {
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteLeft;
             pressLeft = true;
@@ -299,6 +321,7 @@ public class GameManager : MonoBehaviour
     }
     private void RightPress()
     {
+        audioManager.PlayTakeStep();
         if (streetNumber == 0)
         {
             mainSprite.GetComponent<SpriteRenderer>().sprite = spriteRight;
@@ -335,7 +358,7 @@ public class GameManager : MonoBehaviour
     public void EndRound()
     {
         playerBehaviour.setStraight = false;
-        bonusCoins = Mathf.Floor(score / 10);
+        bonusCoins = Mathf.Floor(score / 20);
         coins += bonusCoins;
         isRoundOver = true;
         playerBehaviour.leftTheRamp = false;
@@ -396,11 +419,129 @@ public class GameManager : MonoBehaviour
         coinPrefab = GameObject.FindGameObjectsWithTag("Coin");
         foreach (GameObject coin in coinPrefab)
         {
-            Destroy(coin); 
+            Destroy(coin);
         }
         for (int i = 0; i < coinsOnLevel; i++)
         {
-            GameObject coinObject = Instantiate(coinPrefab2, new Vector3(Random.Range(10f, 1000f), Random.Range(0.5f, 25f), 0), Quaternion.identity); 
+            GameObject coinObject = Instantiate(coinPrefab2, new Vector3(Random.Range(15f, 1700f), Random.Range(0.5f, 75f), 0), Quaternion.identity);
+        }
+    }
+
+    public void EndGame()
+    {
+        coinsGO.SetActive(false);
+        heightGO.SetActive(false);
+        timerSliderObject.SetActive(false);
+        audioManager.cassette.SetActive(false);
+        gameEnded = true;
+        playerBehaviour.cinemachineCamera.Follow = endGameGO;
+        endGameAnimator.Play("EndGame");
+        StartCoroutine(CameraEndGame());
+        StartCoroutine(EndGameCredits());
+        StartCoroutine(EndGameVolume());
+
+
+    }
+
+    private IEnumerator CameraEndGame()
+    {
+        Animator cameraAnimator = playerBehaviour.cinemachineCamera.GetComponent<Animator>();
+        yield return new WaitForSeconds(10f);
+        playerBehaviour.cinemachineCamera.Follow = null;
+        cameraAnimator.Play("CameraEndGame");
+
+    }
+    private IEnumerator EndGameCredits()
+    {
+        endGameCredits.text = "thank you for playing!";
+        yield return new WaitForSeconds(25f);
+        endGameCredits.text = "this is the end. you can quit now.";
+        yield return new WaitForSeconds(10f);
+        endGameCredits.text = "seriously. thanks. you can quit now...";
+        yield return new WaitForSeconds(20f);
+        endGameCredits.text = "...";
+        yield return new WaitForSeconds(20f);
+        endGameCredits.text = "there is nothing else here. no more game";
+        yield return new WaitForSeconds(25f);
+        endGameCredits.text = "...";
+        yield return new WaitForSeconds(15f);
+        endGameCredits.text = "really. if you want to replay it just refresh the page.";
+        yield return new WaitForSeconds(20f);
+        endGameCredits.text = "are you alright?";
+        yield return new WaitForSeconds(40f);
+        endGameCredits.text = "YOU BEAT IT. CONGRATULATIONS. GO PLAY SOMETHING ELSE.";
+        yield return new WaitForSeconds(60f);
+        endGameCredits.text = "fine. have this button so you have SOMETHING to do at least.";
+        endGameCreditsGO.SetActive(true);
+        yield return new WaitForSeconds(40f);
+        endGameCredits.text = "still not bored? I've got a game for you. It's called 'press F5', give it a try!";
+        yield return new WaitForSeconds(30f);
+        endGameCredits.text = "You've waited so long... and for what? Just a wall of text? Well done, player!";
+        yield return new WaitForSeconds(30f);
+        endGameCredits.text = "Enough of this.";
+        endGameCreditsGO.SetActive(false);
+        yield return new WaitForSeconds(3f);
+        endGameCredits.text = "If you do not want to leave I will make you leave.";
+        yield return new WaitForSeconds(60f);
+        endGameCredits.text = "What does a street skater and a stripper have in common?";
+        yield return new WaitForSeconds(7f);
+        endGameCredits.text = "They both love grinding the rail.";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "What is the hardest thing about skateboarding?";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "Concrete.";
+        yield return new WaitForSeconds(2f);
+        endGameCredits.text = "Where do you learn to skate?";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "In a boarding school.";
+        yield return new WaitForSeconds(3f);
+        endGameCredits.text = "How many skateboarders does it take to open a jam jar?";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "One, but it takes 50 tries.";
+        yield return new WaitForSeconds(3f);
+        endGameCredits.text = "Why did the skateboard break up with the bicycle?";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "It couldn’t handle the pressure...";
+        yield return new WaitForSeconds(3f);
+        endGameCredits.text = "What do you call a skateboard with no board?";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "A skate...";
+        yield return new WaitForSeconds(3f);
+        endGameCredits.text = "Please just go.";
+        yield return new WaitForSeconds(10f);
+        endGameCredits.text = "I've heard Flower Defense is a pretty good game. Give it a try, eh?";
+        yield return new WaitForSeconds(25f);
+        endGameCredits.text = "you really don't have anything else going on, huh?";
+        yield return new WaitForSeconds(25f);
+        endGameCredits.text = "yep. figured as much.";
+        yield return new WaitForSeconds(25f);
+        endGameCredits.text = "I've wasted enough of our time. Goodbye now.";
+        yield return new WaitForSeconds(180f);
+        endGameCredits.text = "Were you looking at this text for three minutes straight...?";
+        yield return new WaitForSeconds(15f);
+        endGameCredits.text = "OK. I've got something really exciting, but I've got to prepare. Give me 5 minutes!";
+        yield return new WaitForSeconds(300f);
+        endGameCredits.text = "Here it comes!";
+        yield return new WaitForSeconds(5f);
+        endGameCredits.text = "Kidding. Nothing here. Just wasted more of your time. Haha.";
+        yield return new WaitForSeconds(15f);
+        endGameCredits.text = "Are you trying to prove something to someone?";
+        yield return new WaitForSeconds(15f);
+        endGameCredits.text = "Listen, no one is impressed that you can wait and look at the screen for endless minutes.";
+        yield return new WaitForSeconds(25f);
+        endGameCredits.text = "Honestly, I'd say that's a red flag, but you do you I guess...";
+        yield return new WaitForSeconds(15f);
+        endGameCredits.text = "This is my last message goodbye. Remember the game was made by xmada. Cheers...";
+
+
+
+    }
+    private IEnumerator EndGameVolume()
+    {
+        while (audioManager.tracksAudioSource.volume > 0)
+        {
+            audioManager.tracksAudioSource.volume -= .01f;
+            yield return new WaitForSeconds(.5f);
         }
     }
 }
