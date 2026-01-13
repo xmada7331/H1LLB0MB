@@ -45,7 +45,7 @@ public class AudioManager : MonoBehaviour
 
     void Update()
     {
-        windAmbienceSource.volume = playerBehaviour.rb.velocity.magnitude / 10;
+        windAmbienceSource.volume = playerBehaviour.rb.velocity.magnitude / 20;
         railGrindSource.volume = playerBehaviour.rb.velocity.magnitude / 7;
         if (!isTrackPlaying && !tracksAudioSource.isPlaying && !wasPaused && !gameManager.firstStart)
         {
